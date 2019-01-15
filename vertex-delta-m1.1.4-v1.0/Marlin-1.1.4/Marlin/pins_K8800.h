@@ -56,6 +56,7 @@
 
 #define HEATER_0_PIN        10 //EXTRUDER 1
 #define TEMP_0_PIN          13
+#define TEMP_BED_PIN        8 
 
 #define E0_STEP_PIN         26
 #define E0_DIR_PIN          28
@@ -78,9 +79,10 @@
 #define SUICIDE_PIN         -1
 
 #define LCD_SDSS            53
-#define BEEPER_PIN          23
+//#define BEEPER_PIN          23
 #define DOGLCD_CS           29
 #define DOGLCD_A0           27
+#define HEATER_BED_PIN 36 
 
 #if ENABLED(ULTRA_LCD)
 

@@ -12297,7 +12297,9 @@ void prepare_move_to_destination() {
 
       // Fan off if no steppers have been enabled for CONTROLLERFAN_SECS seconds
       uint8_t speed = (!lastMotorOn || ELAPSED(ms, lastMotorOn + (CONTROLLERFAN_SECS) * 1000UL)) ? 0 : CONTROLLERFAN_SPEED;
-      
+#if HAS_TEMP_BED
+      speed=(thermalManager.degBed()>50)?CONTROLLERFAN_SPEED:speed;//better the fan is on when bed is hot
+#endif       
       // allows digital or PWM fan output to be used (see M42 handling)
       WRITE(CONTROLLER_FAN_PIN, speed);
       analogWrite(CONTROLLER_FAN_PIN, speed);

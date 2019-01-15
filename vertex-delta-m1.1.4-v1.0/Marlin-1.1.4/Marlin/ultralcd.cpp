@@ -3688,7 +3688,7 @@ void kill_screen(const char* lcd_msg) {
       START_SCREEN();
 	  STATIC_ITEM(MSG_SPLASH_NAME, true, true);                        // VERTEX DELTA
       STATIC_ITEM(MSG_SPLASH_FIRMWARE, true);
-      STATIC_ITEM("Config by: "STRING_CONFIG_H_AUTHOR, true);
+      STATIC_ITEM("Config by: " STRING_CONFIG_H_AUTHOR, true);
 	  #if ENABLED(AUTO_BED_LEVELING_3POINT)
         STATIC_ITEM(MSG_3POINT_LEVELING, true);                        // 3-Point Leveling
       #elif ENABLED(AUTO_BED_LEVELING_LINEAR)

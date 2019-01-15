@@ -1,4 +1,4 @@
-﻿/**
+ /**
  * Marlin 3D Printer Firmware
  * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
@@ -269,7 +269,7 @@
 #define TEMP_SENSOR_2 0
 #define TEMP_SENSOR_3 0
 #define TEMP_SENSOR_4 0
-#define TEMP_SENSOR_BED 0
+#define TEMP_SENSOR_BED 75 //100k Generic Silicon Heat Pad with NTC 100K MGB18-104F39050L32 thermistor
 
 // Dummy thermistor constant temperature readings, for use with 998 and 999
 #define DUMMY_THERMISTOR_998_VALUE 25
@@ -362,7 +362,7 @@
 // If your configuration is significantly different than this and you don't understand the issues involved, you probably
 // shouldn't use bed PID until someone else verifies your hardware works.
 // If this is enabled, find your own PID constants below.
-//#define PIDTEMPBED
+#define PIDTEMPBED
 
 //#define BED_LIMIT_SWITCHING
 
@@ -378,9 +378,13 @@
 
   //120V 250W silicone heater into 4mm borosilicate (MendelMax 1.5+)
   //from FOPDT model - kp=.39 Tp=405 Tdead=66, Tc set to 79.2, aggressive factor of .15 (vs .1, 1, 10)
-  #define  DEFAULT_bedKp 10.00
-  #define  DEFAULT_bedKi .023
-  #define  DEFAULT_bedKd 305.4
+//  #define  DEFAULT_bedKp 10.00
+//  #define  DEFAULT_bedKi .023
+//  #define  DEFAULT_bedKd 305.4
+#define  DEFAULT_bedKp 68.52
+#define  DEFAULT_bedKi 12.12
+#define  DEFAULT_bedKd 96.83
+
 
   //120V 250W silicone heater into 4mm borosilicate (MendelMax 1.5+)
   //from pidautotune
@@ -491,8 +495,9 @@
   #define DELTA_DIAGONAL_ROD 207.000 // mm
 		
   // height from z=0 to home position
-  #define DELTA_HEIGHT 308.000 // get this value from auto calibrate
-
+  // changed by shelxle
+ // #define DELTA_HEIGHT 311.000 // get this value from auto calibrate
+#define DELTA_HEIGHT 293.8// silicon 200W12V heatbed with spacers
   #define DELTA_ENDSTOP_ADJ { 0.0, 0.0, 0.0 } // get these from auto calibrate
 
   // Horizontal distance bridged by diagonal push rods when effector is centered.
@@ -578,7 +583,18 @@
  * Override with M92
  *                                      X, Y, Z, E0 [, E1[, E2[, E3[, E4]]]]
  */
-#define DEFAULT_AXIS_STEPS_PER_UNIT   { 116.360, 116.360, 116.360, 148.700 }  // default steps per unit for Kossel (GT2, 20 tooth)
+//#define DEFAULT_AXIS_STEPS_PER_UNIT   { 116.360, 116.360, 116.360, 148.700 }  // default steps per unit for Kossel (GT2, 20 tooth)
+#define XYZ_FULL_STEPS_PER_ROTATION 200
+#define XYZ_MICROSTEPS 32
+#define XYZ_BELT_PITCH 2.5
+#define XYZ_PULLEY_TEETH 22
+
+// delta speeds must be the same on xyz
+//#define DEFAULT_XYZ_STEPS_PER_UNIT ((XYZ_FULL_STEPS_PER_ROTATION) * (XYZ_MICROSTEPS) / double(XYZ_BELT_PITCH) / double(XYZ_PULLEY_TEETH))
+//#define DEFAULT_AXIS_STEPS_PER_UNIT   { DEFAULT_XYZ_STEPS_PER_UNIT, DEFAULT_XYZ_STEPS_PER_UNIT, DEFAULT_XYZ_STEPS_PER_UNIT, 760*1.1 }  // default steps per unit for Kossel (GT2, 20 tooth)
+#define DEFAULT_XYZ_STEPS_PER_UNIT ((XYZ_FULL_STEPS_PER_ROTATION) * (XYZ_MICROSTEPS) / double(XYZ_BELT_PITCH) / double(XYZ_PULLEY_TEETH))
+#define DEFAULT_AXIS_STEPS_PER_UNIT   { DEFAULT_XYZ_STEPS_PER_UNIT, DEFAULT_XYZ_STEPS_PER_UNIT, DEFAULT_XYZ_STEPS_PER_UNIT,  154.895 }  // default steps per unit for Kossel - Velleman
+
 
 /**
  * Default Max Feed Rate (mm/s)
@@ -616,8 +632,8 @@
  * value set here, it may happen instantaneously.
  */
 #define DEFAULT_XJERK                 20.0
-#define DEFAULT_YJERK                 20.0
-#define DEFAULT_ZJERK                 20.0 // Must be same as XY for delta
+#define DEFAULT_YJERK                 DEFAULT_XJERK
+#define DEFAULT_ZJERK                 DEFAULT_XJERK // Must be same as XY for delta
 #define DEFAULT_EJERK                  5.0
 
 //===========================================================================
@@ -745,7 +761,7 @@
 #define Z_PROBE_SPEED_SLOW (Z_PROBE_SPEED_FAST / 4)
 
 // Use double touch for probing
-//#define PROBE_DOUBLE_TOUCH
+#define PROBE_DOUBLE_TOUCH
 
 /**
  * Allen key retractable z-probe as seen on many Kossel delta printers - http://reprap.org/wiki/Kossel#Automatic_bed_leveling_probe
