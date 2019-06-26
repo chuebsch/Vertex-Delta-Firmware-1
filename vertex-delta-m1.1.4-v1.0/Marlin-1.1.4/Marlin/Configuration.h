@@ -74,7 +74,7 @@
 // User-specified version info of this build to display in [Pronterface, etc] terminal window during
 // startup. Implementation of an idea by Prof Braino to inform user that any changes made to this
 // build by the user have been successfully uploaded into firmware.
-#define STRING_CONFIG_H_AUTHOR "JGE" // Who made the changes.
+#define STRING_CONFIG_H_AUTHOR "JGE+chuebsch" // Who made the changes.
 #define SHOW_BOOTSCREEN
 #define STRING_SPLASH_LINE1 SHORT_BUILD_VERSION // will be shown during bootup in line 1
 #define STRING_SPLASH_LINE2 WEBSITE_URL         // will be shown during bootup in line 2
@@ -496,8 +496,8 @@
 		
   // height from z=0 to home position
   // changed by shelxle
- // #define DELTA_HEIGHT 311.000 // get this value from auto calibrate
-#define DELTA_HEIGHT 293.8// silicon 200W12V heatbed with spacers
+ #define DELTA_HEIGHT 313.000 // get this value from auto calibrate
+ // #define DELTA_HEIGHT 293.8// silicon 200W12V heatbed with spacers
   #define DELTA_ENDSTOP_ADJ { 0.0, 0.0, 0.0 } // get these from auto calibrate
 
   // Horizontal distance bridged by diagonal push rods when effector is centered.
@@ -1681,6 +1681,16 @@
   #define RGB_LED_W_PIN -1
 #endif
 
+// Support for Adafruit Neopixel LED driver
+#define NEOPIXEL_LED
+#if ENABLED(NEOPIXEL_LED)
+  #define NEOPIXEL_TYPE   NEO_GRB // NEO_GRBW / NEO_GRB - four/three channel driver type (defined in Adafruit_NeoPixel.h)
+  #define NEOPIXEL_PIN    33      // LED driving pin on motherboard 4 => D4 (EXP2-5 on Printrboard) / 30 => PC7 (EXP3-13 on Rumba)
+  #define NEOPIXEL_PIXELS 20      // Number of LEDs in the strip
+  #define NEOPIXEL_IS_SEQUENTIAL  // Sequential display for temperature change - LED by LED. Disable to change all LEDs at once.
+  #define NEOPIXEL_BRIGHTNESS 64  // Initial brightness (0-255)
+  #define NEOPIXEL_STARTUP_TEST   // Cycle through colors at startup
+#endif
 /**
  * Printer Event LEDs
  *
@@ -1692,7 +1702,7 @@
  *  - Change to green once print has finished
  *  - Turn off after the print has finished and the user has pushed a button
  */
-#if ENABLED(BLINKM) || ENABLED(RGB_LED) || ENABLED(RGBW_LED) || ENABLED(PCA9632)
+#if ENABLED(BLINKM) || ENABLED(RGB_LED) || ENABLED(RGBW_LED) || ENABLED(PCA9632)|| ENABLED(NEOPIXEL_LED)
   #define PRINTER_EVENT_LEDS
 #endif
 

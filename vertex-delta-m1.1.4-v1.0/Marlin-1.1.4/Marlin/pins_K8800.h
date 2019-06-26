@@ -92,7 +92,7 @@
     #define LCD_PINS_ENABLE   29
     #define LCD_PINS_D4       37
     #define LCD_PINS_D5       35 
-    #define LCD_PINS_D6       33
+    #define LCD_PINS_D6       -1//33
     #define LCD_PINS_D7       31
 
     #define BTN_EN1           17

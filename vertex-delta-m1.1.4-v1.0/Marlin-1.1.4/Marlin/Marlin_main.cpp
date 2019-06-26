@@ -288,6 +288,10 @@
   #include "pca9632.h"
 #endif
 
+#if HAS_COLOR_LEDS
+  #include "leds.h"
+#endif
+
 #if HAS_SERVOS
   #include "servo.h"
 #endif
@@ -978,7 +982,7 @@ void servo_init() {
   }
 
 #endif
-
+/*
 #if HAS_COLOR_LEDS
 
   void set_led_color(
@@ -1020,7 +1024,7 @@ void servo_init() {
   }
 
 #endif // HAS_COLOR_LEDS
-
+*/
 void gcode_line_error(const char* err, bool doFlush = true) {
   SERIAL_ERROR_START();
   serialprintPGM(err);
@@ -1171,7 +1175,9 @@ inline void get_serial_commands() {
 }
 
 #if ENABLED(SDSUPPORT)
-
+  #if ENABLED(PRINTER_EVENT_LEDS) && HAS_RESUME_CONTINUE
+    static bool lights_off_after_print; // = false
+  #endif
   /**
    * Get commands from the SD Card until the command buffer is full
    * or until the end of the file is reached. The special character '#'
@@ -1206,14 +1212,14 @@ inline void get_serial_commands() {
           SERIAL_PROTOCOLLNPGM(MSG_FILE_PRINTED);
           card.printingHasFinished();
           #if ENABLED(PRINTER_EVENT_LEDS)
-            LCD_MESSAGEPGM(MSG_INFO_COMPLETED_PRINTS);
-            set_led_color(0, 255, 0); // Green
+            LCD_MESSAGEPGM(MSG_INFO_COMPLETED_PRINTS);            
+            leds.set_green();
             #if HAS_RESUME_CONTINUE
               enqueue_and_echo_commands_P(PSTR("M0")); // end of the queue!
             #else
               safe_delay(1000);
             #endif
-            set_led_color(0, 0, 0);   // OFF
+            leds.set_off();
           #endif
           card.checkautostart(true);
         }
@@ -7311,6 +7317,7 @@ inline void gcode_M109() {
     const float start_temp = thermalManager.degHotend(target_extruder);
     uint8_t old_blue = 0;
   #endif
+  
 
   do {
     // Target temperature might be changed during the loop
@@ -7344,8 +7351,16 @@ inline void gcode_M109() {
     #if ENABLED(PRINTER_EVENT_LEDS)
       // Gradually change LED strip from violet to red as nozzle heats up
       if (!wants_to_cool) {
-        const uint8_t blue = map(constrain(temp, start_temp, target_temp), start_temp, target_temp, 255, 0);
-        if (blue != old_blue) set_led_color(255, 0, (old_blue = blue));
+        const uint8_t blue = map(constrain(temp, start_temp, target_temp), start_temp, target_temp, 255, 0);        
+        if (blue != old_blue) {
+          old_blue = blue;
+          leds.set_color(
+            MakeLEDColor(255, 0, blue, 0, pixels.getBrightness())
+            #if ENABLED(NEOPIXEL_IS_SEQUENTIAL)
+              , true
+            #endif
+          );
+        }
       }
     #endif
 
@@ -7380,11 +7395,7 @@ inline void gcode_M109() {
   if (wait_for_heatup) {
     LCD_MESSAGEPGM(MSG_HEATING_COMPLETE);
     #if ENABLED(PRINTER_EVENT_LEDS)
-      #if ENABLED(RGBW_LED)
-        set_led_color(0, 0, 0, 255);  // Turn on the WHITE LED
-      #else
-        set_led_color(255, 255, 255); // Set LEDs All On
-      #endif
+      leds.set_white();
     #endif
   }
 
@@ -7438,7 +7449,7 @@ inline void gcode_M109() {
 
     #if ENABLED(PRINTER_EVENT_LEDS)
       const float start_temp = thermalManager.degBed();
-      uint8_t old_red = 255;
+      uint8_t old_red = 127;
     #endif
 
     do {
@@ -7470,11 +7481,19 @@ inline void gcode_M109() {
 
       const float temp = thermalManager.degBed();
 
-      #if ENABLED(PRINTER_EVENT_LEDS)
+          #if ENABLED(PRINTER_EVENT_LEDS)
         // Gradually change LED strip from blue to violet as bed heats up
         if (!wants_to_cool) {
           const uint8_t red = map(constrain(temp, start_temp, target_temp), start_temp, target_temp, 0, 255);
-          if (red != old_red) set_led_color((old_red = red), 0, 255);
+          if (red != old_red) {
+            old_red = red;
+            leds.set_color(
+              MakeLEDColor(red, 0, 255, 0, pixels.getBrightness())
+              #if ENABLED(NEOPIXEL_IS_SEQUENTIAL)
+                , true
+              #endif
+            );
+          }
         }
       #endif
 
@@ -8113,8 +8132,10 @@ inline void gcode_M121() { endstops.enable_globally(false); }
 
   /**
    * M150: Set Status LED Color - Use R-U-B-W for R-G-B-W
+   *       and Brightness       - Use P (for NEOPIXEL only)
    *
    * Always sets all 3 or 4 components. If a component is left out, set to 0.
+   *                                    If brightness is left out, no value changed
    *
    * Examples:
    *
@@ -8123,21 +8144,20 @@ inline void gcode_M121() { endstops.enable_globally(false); }
    *   M150            ; Turn LED off
    *   M150 R U B      ; Turn LED white
    *   M150 W          ; Turn LED white using a white LED
-   *
+   *   M150 P127       ; Set LED 50% brightness
+   *   M150 P          ; Set LED full brightness
    */
   inline void gcode_M150() {
-    set_led_color(
+    leds.set_color(MakeLEDColor(
       parser.seen('R') ? (parser.has_value() ? parser.value_byte() : 255) : 0,
       parser.seen('U') ? (parser.has_value() ? parser.value_byte() : 255) : 0,
-      parser.seen('B') ? (parser.has_value() ? parser.value_byte() : 255) : 0
-      #if ENABLED(RGBW_LED)
-        , parser.seen('W') ? (parser.has_value() ? parser.value_byte() : 255) : 0
-      #endif
-    );
+      parser.seen('B') ? (parser.has_value() ? parser.value_byte() : 255) : 0,
+      parser.seen('W') ? (parser.has_value() ? parser.value_byte() : 255) : 0,
+      parser.seen('P') ? (parser.has_value() ? parser.value_byte() : 255) : pixels.getBrightness()
+    ));
   }
 
 #endif // HAS_COLOR_LEDS
-
 /**
  * M200: Set filament diameter and set E axis units to cubic units
  *
@@ -12298,8 +12318,9 @@ void prepare_move_to_destination() {
       // Fan off if no steppers have been enabled for CONTROLLERFAN_SECS seconds
       uint8_t speed = (!lastMotorOn || ELAPSED(ms, lastMotorOn + (CONTROLLERFAN_SECS) * 1000UL)) ? 0 : CONTROLLERFAN_SPEED;
 #if HAS_TEMP_BED
-      speed=(thermalManager.degBed()>50)?CONTROLLERFAN_SPEED:speed;//better the fan is on when bed is hot
-#endif       
+      speed=(thermalManager.degBed()>45)?CONTROLLERFAN_SPEED:speed;//better the fan is on when bed is hot
+#endif    
+      
       // allows digital or PWM fan output to be used (see M42 handling)
       WRITE(CONTROLLER_FAN_PIN, speed);
       analogWrite(CONTROLLER_FAN_PIN, speed);
@@ -13002,6 +13023,10 @@ void setup() {
 
   stepper.init();    // Initialize stepper, this enables interrupts!
   servo_init();
+  
+  #if HAS_COLOR_LEDS
+    leds.setup();
+  #endif
 
   #if HAS_PHOTOGRAPH
     OUT_WRITE(PHOTOGRAPH_PIN, LOW);
@@ -13188,4 +13213,3 @@ void loop() {
   endstops.report_state();
   idle();
 }
-
