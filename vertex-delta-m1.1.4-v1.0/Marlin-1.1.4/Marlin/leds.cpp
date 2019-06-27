@@ -73,9 +73,15 @@ void LEDLights::set_color(const LEDColor &incol
   #if ENABLED(NEOPIXEL_LED)
 
     const uint32_t neocolor = pixels.Color(incol.r, incol.g, incol.b, incol.w);
-    static uint16_t nextLed = 0;
+    //static uint16_t nextLed = 0;
 
     pixels.setBrightness(incol.i);
+    int firstled=(isSequence)?pixels.numPixels()/2:0;    
+    int lastled=(isSequence)?pixels.numPixels():pixels.numPixels()/2;
+    for (int i=firstled; i<lastled;i++)pixels.setPixelColor(i, neocolor);
+    pixels.show();
+    return;
+    /*
     if (!isSequence)
       set_neopixel_color(neocolor);
     else {
@@ -83,7 +89,9 @@ void LEDLights::set_color(const LEDColor &incol
       pixels.show();
       if (++nextLed >= pixels.numPixels()) nextLed = 0;
       return;
+      
     }
+    */
 
   #endif
 

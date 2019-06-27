@@ -1176,7 +1176,7 @@ inline void get_serial_commands() {
 
 #if ENABLED(SDSUPPORT)
   #if ENABLED(PRINTER_EVENT_LEDS) && HAS_RESUME_CONTINUE
-    static bool lights_off_after_print; // = false
+    static bool lights_off_after_print; // = false; //
   #endif
   /**
    * Get commands from the SD Card until the command buffer is full
@@ -1215,6 +1215,7 @@ inline void get_serial_commands() {
             LCD_MESSAGEPGM(MSG_INFO_COMPLETED_PRINTS);            
             leds.set_green();
             #if HAS_RESUME_CONTINUE
+              lights_off_after_print = true;
               enqueue_and_echo_commands_P(PSTR("M0")); // end of the queue!
             #else
               safe_delay(1000);
@@ -5784,7 +5785,14 @@ inline void gcode_G92() {
         while (wait_for_user) idle();
       #endif
     }
-
+    
+    #if ENABLED(PRINTER_EVENT_LEDS) && ENABLED(SDSUPPORT)
+      if (lights_off_after_print) {
+        leds.set_off();
+        lights_off_after_print = false;
+      }
+    #endif
+    
     wait_for_user = false;
     KEEPALIVE_STATE(IN_HANDLER);
   }
@@ -7350,15 +7358,16 @@ inline void gcode_M109() {
 
     #if ENABLED(PRINTER_EVENT_LEDS)
       // Gradually change LED strip from violet to red as nozzle heats up
+      // ch blue to red
       if (!wants_to_cool) {
         const uint8_t blue = map(constrain(temp, start_temp, target_temp), start_temp, target_temp, 255, 0);        
         if (blue != old_blue) {
           old_blue = blue;
           leds.set_color(
-            MakeLEDColor(255, 0, blue, 0, pixels.getBrightness())
-            #if ENABLED(NEOPIXEL_IS_SEQUENTIAL)
-              , true
-            #endif
+            MakeLEDColor(constrain(255-blue,0,255), 0, blue, 0, pixels.getBrightness())
+            //#if ENABLED(NEOPIXEL_IS_SEQUENTIAL)
+              ,true
+            //#endif
           );
         }
       }
@@ -7488,10 +7497,10 @@ inline void gcode_M109() {
           if (red != old_red) {
             old_red = red;
             leds.set_color(
-              MakeLEDColor(red, 0, 255, 0, pixels.getBrightness())
-              #if ENABLED(NEOPIXEL_IS_SEQUENTIAL)
-                , true
-              #endif
+              MakeLEDColor(red, 0, constrain(255-red,0,255), 0, pixels.getBrightness())
+              //#if ENABLED(NEOPIXEL_IS_SEQUENTIAL)
+                , false
+              //#endif
             );
           }
         }
